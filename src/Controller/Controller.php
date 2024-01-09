@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 
-class Controller extends AbstractController
+final class Controller extends AbstractController
 {
     #[Route('/', name: 'name_page')]
     public function firstFunction(): Response
