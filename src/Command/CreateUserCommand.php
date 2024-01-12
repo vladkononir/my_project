@@ -2,30 +2,30 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Command;
 
 use App\Entity\User;
+use App\Repository\User\UserRepositoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Input\InputArgument;
-use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:create-user',
+    description: 'Creates a new user.',
+    aliases: ['app:add-user']
 )]
-final class CreateUserController extends Command
+final class CreateUserCommand extends Command
 {
-    private \Doctrine\Persistence\ObjectManager $entityManager;
-    private UserPasswordHasherInterface $userPasswordHasher;
 
-    public function __construct(ManagerRegistry $doctrine, UserPasswordHasherInterface $userPasswordHasher)
-    {
+    public function __construct(
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private  readonly UserRepositoryInterface $userRepository,
+    ) {
         parent::__construct();
-        $this->entityManager = $doctrine->getManager();
-        $this->userPasswordHasher = $userPasswordHasher;
     }
 
     protected function configure(): void
@@ -33,6 +33,7 @@ final class CreateUserController extends Command
         $this
             ->addArgument('email', InputArgument::REQUIRED, 'Your email')
             ->addArgument('password', InputArgument::REQUIRED, 'Your password')
+            ->setDescription('Creates a new user.')
         ;
     }
 
@@ -41,11 +42,10 @@ final class CreateUserController extends Command
         $email = $input->getArgument('email');
         $password = $input->getArgument('password');
         $user = new User();
-        $hashedPassword = $this->userPasswordHasher->hashPassword($user, $password);
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
         $user->setEmail($email);
         $user->setPassword($hashedPassword);
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        $this->userRepository->save($user);
         $output->writeln('User created');
 
         return Command::SUCCESS;
