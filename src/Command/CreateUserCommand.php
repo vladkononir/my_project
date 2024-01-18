@@ -4,49 +4,57 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\User;
 use App\Repository\User\UserRepositoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use App\Service\RegistrationUserService;
 
 #[AsCommand(
     name: 'app:create-user',
     description: 'Creates a new user.',
-    aliases: ['app:add-user']
+    aliases: ['app:add-user'],
 )]
 final class CreateUserCommand extends Command
 {
-
     public function __construct(
-        private readonly UserPasswordHasherInterface $passwordHasher,
-        private  readonly UserRepositoryInterface $userRepository,
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly RegistrationUserService $userRegistration,
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this
-            ->addArgument('email', InputArgument::REQUIRED, 'Your email')
-            ->addArgument('password', InputArgument::REQUIRED, 'Your password')
-            ->setDescription('Creates a new user.')
-        ;
+        $this->setDescription('Creates a new user.');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $email = $input->getArgument('email');
-        $password = $input->getArgument('password');
-        $user = new User();
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
-        $user->setEmail($email);
-        $user->setPassword($hashedPassword);
+    protected function execute(
+        InputInterface $input,
+        OutputInterface $output,
+    ): int {
+        $io = new SymfonyStyle($input, $output);
+        $io->title('Creating a user');
+        $email = $this->userRegistration->emailInput($io);
+        $password = $this->userRegistration->passwordInput($io);
+        try {
+            $user = $this->userRepository->createUser($email, $password);
+        } catch (\Exception $ex) {
+            $io->error(
+                sprintf(
+                    '%s %s %s',
+                    'User not created ',
+                    'error - ',
+                    $ex->getMessage()
+                )
+            );
+
+            return Command::FAILURE;
+        }
         $this->userRepository->save($user);
-        $output->writeln('User created');
+        $io->success('User created');
 
         return Command::SUCCESS;
     }

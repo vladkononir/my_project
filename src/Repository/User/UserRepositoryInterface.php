@@ -12,5 +12,6 @@ interface UserRepositoryInterface
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void;
 
     public function save(User $user): void;
-}
 
+    public function createUser(string $email, string $password): User;
+}

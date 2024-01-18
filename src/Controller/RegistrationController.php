@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 final class RegistrationController extends AbstractController
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository
+        private readonly UserRepositoryInterface $userRepository,
     ) {}
 
     #[Route('/register', name: 'app_register')]
