@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Repository\User\UserRepositoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use App\Service\RegistrationUserService;
+use RuntimeException;
 
 #[AsCommand(
     name: 'app:create-user',
@@ -20,8 +20,7 @@ use App\Service\RegistrationUserService;
 final class CreateUserCommand extends Command
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository,
-        private readonly RegistrationUserService $userRegistration,
+        private readonly RegistrationUserService $userRegistrationService,
     ) {
         parent::__construct();
     }
@@ -31,30 +30,56 @@ final class CreateUserCommand extends Command
         $this->setDescription('Creates a new user.');
     }
 
+    private function askEmail(
+        SymfonyStyle $io
+    ): string {
+        return $io->askHidden('What is your email?', function ($email): string {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new RuntimeException('The email is incorrect');
+            }
+
+            return $email;
+        });
+    }
+
+    private function askPassword(
+        SymfonyStyle $io
+    ): string {
+        return $io->askHidden(
+            'What is your password?',
+            function ($password): string {
+                if (strlen($password) < 8) {
+                    throw new RuntimeException(
+                        'The password cannot be less than 8 symbols'
+                    );
+                }
+
+                return $password;
+            }
+        );
+    }
+
     protected function execute(
         InputInterface $input,
         OutputInterface $output,
     ): int {
         $io = new SymfonyStyle($input, $output);
+
         $io->title('Creating a user');
-        $email = $this->userRegistration->emailInput($io);
-        $password = $this->userRegistration->passwordInput($io);
+
         try {
-            $user = $this->userRepository->createUser($email, $password);
-        } catch (\Exception $ex) {
-            $io->error(
-                sprintf(
-                    '%s %s %s',
-                    'User not created ',
-                    'error - ',
-                    $ex->getMessage()
-                )
-            );
+            $email = $this->askEmail($io);
+            $password = $this->askPassword($io);
+
+            $this->userRegistrationService->register($email, $password);
+        } catch (\Exception $exception) {
+            $io->error(sprintf('User has not been created. Error: %s',
+$exception->getMessage()));
 
             return Command::FAILURE;
         }
-        $this->userRepository->save($user);
-        $io->success('User created');
+
+        $io->success('User was created');
 
         return Command::SUCCESS;
     }

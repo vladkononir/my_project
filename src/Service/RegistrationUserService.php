@@ -4,37 +4,24 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use Symfony\Component\Console\Style\SymfonyStyle;
-use RuntimeException;
+use App\Entity\User;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Repository\User\UserRepositoryInterface;
 
-class RegistrationUserService
+readonly final class RegistrationUserService
 {
-    public function emailInput(
-        SymfonyStyle $io,
-    ): string {
-        return $io->askHidden('What is your email?', function ($email) {
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new RuntimeException('The email is incorrect');
-            }
-
-            return $email;
-        });
+    public function __construct(
+        private UserPasswordHasherInterface $passwordHasher,
+        private UserRepositoryInterface $userRepository,
+    ) {
     }
 
-    public function passwordInput(
-        SymfonyStyle $io,
-    ): string {
-        return $io->askHidden(
-            'What is your password?',
-            function ($password) {
-                if (strlen($password) < 8) {
-                    throw new RuntimeException(
-                        'The password cannot be less than 8 symbols'
-                    );
-                }
-
-                return $password;
-            }
-        );
+    public function register(string $email, string $password): void
+    {
+        $user = new User;
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
+        $user->setEmail($email);
+        $user->setPassword($hashedPassword);
+        $this->userRepository->save($user);
     }
 }
