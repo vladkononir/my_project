@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\ValueObject\PasswordValueObject;
+use App\ValueObject\EmailValueObject;
 use App\Repository\User\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -37,9 +39,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(EmailValueObject $email): static
     {
-        $this->email = $email;
+        $this->email = $email->value;
 
         return $this;
     }
@@ -69,9 +71,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(PasswordValueObject $password): static
     {
-        $this->password = $password;
+        $this->password = $password->value;
 
         return $this;
     }

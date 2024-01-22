@@ -25,11 +25,6 @@ final class CreateUserCommand extends Command
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
-        $this->setDescription('Creates a new user.');
-    }
-
     private function askEmail(
         SymfonyStyle $io
     ): string {
@@ -50,7 +45,7 @@ final class CreateUserCommand extends Command
             function ($password): string {
                 if (strlen($password) < 8) {
                     throw new RuntimeException(
-                        'The password cannot be less than 8 symbols'
+                        'The password cannot be less than 8 symbols',
                     );
                 }
 

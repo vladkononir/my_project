@@ -9,7 +9,10 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 interface UserRepositoryInterface
 {
-    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void;
+    public function upgradePassword(
+        PasswordAuthenticatedUserInterface $user,
+        string $newHashedPassword
+    ): void;
 
     public function save(User $user): void;
 }

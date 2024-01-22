@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\ValueObject\EmailValueObject;
 use App\Entity\User;
+use App\ValueObject\PasswordValueObject;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Repository\User\UserRepositoryInterface;
 
-readonly final class RegistrationUserService
+final readonly class RegistrationUserService
 {
     public function __construct(
         private UserPasswordHasherInterface $passwordHasher,
@@ -16,12 +18,18 @@ readonly final class RegistrationUserService
     ) {
     }
 
-    public function register(string $email, string $password): void
+    public function register($email, $password): void
     {
-        $user = new User;
+        $user = new User();
+
+        $validEmail = new EmailValueObject($email);
+
         $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
-        $user->setEmail($email);
-        $user->setPassword($hashedPassword);
+
+        $validHashedPassword = new PasswordValueObject($hashedPassword);
+
+        $user->setEmail($validEmail);
+        $user->setPassword($validHashedPassword);
         $this->userRepository->save($user);
     }
 }
