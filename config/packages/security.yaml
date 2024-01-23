@@ -14,10 +14,10 @@ security:
             lazy: true
             provider: app_user_provider
             logout:
-                path: app_logout
+                path: logout
             form_login:
-                login_path: app_login
-                check_path: app_login
+                login_path: login
+                check_path: login
     access_control:
 when@test:
     security:

@@ -1,37 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
-use Doctrine\ORM\EntityManagerInterface;
+use App\ValueObject\Email;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Repository\User\UserRepositoryInterface;
 
-class RegistrationController extends AbstractController
+final class RegistrationController extends AbstractController
 {
-    #[Route('/register', name: 'app_register')]
-    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
+    public function __construct(
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly UserPasswordHasherInterface $userPasswordHasher,
+    ) {
+    }
+
+    #[Route('/register', name: 'register', methods: ['GET', 'POST'])]
+    public function register(Request $request): Response
     {
-        $user = new User();
-        $form = $this->createForm(RegistrationFormType::class, $user);
+        $form = $this->createForm(RegistrationFormType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword(
-                $userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('plainPassword')->getData()
-                )
+            $user = new User(new Email($form->get('email')->getData()));
+
+            $hashedPassword = $this->userPasswordHasher->hashPassword(
+                $user,
+                $form->get('plainPassword')->getData(),
             );
+            $user->setPassword($hashedPassword);
 
-            $entityManager->persist($user);
-            $entityManager->flush();
+            $this->userRepository->save($user);
 
-            return $this->redirectToRoute('app_login');
+            return $this->redirectToRoute('login');
         }
 
         return $this->render('registration/register.html.twig', [
