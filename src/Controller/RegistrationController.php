@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
+use App\ValueObject\Email;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,24 +22,24 @@ final class RegistrationController extends AbstractController
     ) {
     }
 
-    #[Route('/register', name: 'app_register')]
+    #[Route('/register', name: 'register', methods: ['GET', 'POST'])]
     public function register(Request $request): Response
     {
-        $user = new User();
-        $form = $this->createForm(RegistrationFormType::class, $user);
+        $form = $this->createForm(RegistrationFormType::class);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword(
-                $this->userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('plainPassword')->getData()
-                )
+            $user = new User(new Email($form->get('email')->getData()));
+
+            $hashedPassword = $this->userPasswordHasher->hashPassword(
+                $user,
+                $form->get('plainPassword')->getData(),
             );
+            $user->setPassword($hashedPassword);
 
             $this->userRepository->save($user);
 
-            return $this->redirectToRoute('app_login');
+            return $this->redirectToRoute('login');
         }
 
         return $this->render('registration/register.html.twig', [

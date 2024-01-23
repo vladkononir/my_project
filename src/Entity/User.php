@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\ValueObject\PasswordValueObject;
-use App\ValueObject\EmailValueObject;
 use App\Repository\User\UserRepository;
+use App\ValueObject\Email;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -18,32 +17,40 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
     #[ORM\Column(length: 180, unique: true)]
-    private ?string $email = null;
+    private string $email;
 
     #[ORM\Column]
     private array $roles = [];
 
     #[ORM\Column]
-    private ?string $password = null;
+    private string $password;
 
-    public function getId(): ?int
+    public function __construct(Email $email)
+    {
+        $this->email = $email->value;
+    }
+
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function getEmail(): ?string
+    public function getEmail(): Email
     {
-        return $this->email;
+        return new Email($this->email);
     }
 
-    public function setEmail(EmailValueObject $email): static
+    public function getPassword(): ?string
     {
-        $this->email = $email->value;
+        return $this->password;
+    }
 
-        return $this;
+    public function setPassword(string $password): void
+    {
+        $this->password = $password;
     }
 
     public function getUserIdentifier(): string
@@ -59,21 +66,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): static
+    public function setRoles(array $roles): self
     {
         $this->roles = $roles;
-
-        return $this;
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(PasswordValueObject $password): static
-    {
-        $this->password = $password->value;
 
         return $this;
     }
