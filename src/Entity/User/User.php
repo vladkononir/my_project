@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\Entity\User;
 
+use App\Entity\User\ValueObject\Email;
 use App\Repository\User\UserRepository;
-use App\ValueObject\Email;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;

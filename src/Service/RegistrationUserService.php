@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\User;
-use App\ValueObject\Email;
-use App\ValueObject\Password;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Entity\User\User;
+use App\Entity\User\ValueObject\Email;
+use App\Entity\User\ValueObject\Password;
 use App\Repository\User\UserRepositoryInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final readonly class RegistrationUserService
 {
